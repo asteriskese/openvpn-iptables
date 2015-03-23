@@ -1,0 +1,77 @@
+#######################################################
+#/etc/sysconfig/iptables
+#WAN : eth0
+#LAN1: eth1
+#tun0- 10.8.0.0/24
+#LastUpdate: 10:48 05/03/2015
+#Author: tinhcx@daivietgroup/net / tinhcx@gmail.com
+#######################################################
+#_________________________________________________NAT:BEGIN
+*nat
+:PREROUTING ACCEPT [507:45436]
+:POSTROUTING ACCEPT [1:108]
+:OUTPUT ACCEPT [1:108]
+#INTERNET GW:
+#-A POSTROUTING -o eth0 -j MASQUERADE
+
+#OPENVPN CLIENT SEE SERVER NETWORK:
+#####qwerty:begin
+-A POSTROUTING -s 10.8.1.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.2.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.3.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.4.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.5.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.6.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.7.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.8.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.9.0/24 -o eth1 -j MASQUERADE
+-A POSTROUTING -s 10.8.10.0/24 -o eth1 -j MASQUERADE
+#...
+#####qwerty:end
+COMMIT
+#_________________________________________________NAT:END
+
+#_________________________________________________FILTER:BEGIN
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [333:34327]
+#
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+-A INPUT -p icmp -j ACCEPT 
+-A INPUT -i lo -j ACCEPT 
+##
+#SSH:
+-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+
+#OPENVPN:
+-A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT
+
+#
+-A INPUT -j REJECT --reject-with icmp-host-prohibited 
+-A INPUT -i tun0 -j ACCEPT
+#-A INPUT -j REJECT --reject-with icmp-host-prohibited
+#########qwerty:begin
+#FORWARD STARTING HERE FOR OPENVPN CLIENT: QUYET DINH CHO NETWORK NAO DI FULL/LIMIT
+#ADMIN: FULL SERVER NETWORK:
+-A FORWARD -s 10.8.1.0/24 -d 10.176.8.0/24 -i tun0 -j ACCEPT
+
+#LIMIT:
+-A FORWARD -s 10.8.2.0/24 -d 10.176.8.208/32 -i tun0 -j ACCEPT
+-A FORWARD -s 10.8.2.0/24 -d 10.176.8.244/32 -i tun0 -j ACCEPT
+-A FORWARD -s 10.8.2.0/24 -d 10.176.8.247/32 -i tun0 -j ACCEPT
+-A FORWARD -s 10.8.2.0/24 -d 10.176.8.250/32 -i tun0 -j ACCEPT
+
+#LIMIT:
+-A FORWARD -s 10.8.3.0/24 -d 10.176.8.247/32 -i tun0 -j ACCEPT 
+-A FORWARD -s 10.8.3.0/24 -d 10.176.8.251/32 -i tun0 -j ACCEPT
+
+#########qwerty:end
+-A FORWARD -o tun0 -j ACCEPT 
+-A FORWARD -j REJECT --reject-with icmp-host-prohibited
+##
+-A OUTPUT -o eth0 -p tcp -m tcp --dport 53 -j ACCEPT 
+-A OUTPUT -o tun0 -j ACCEPT 
+COMMIT
+#_________________________________________________FILTER:END
+
